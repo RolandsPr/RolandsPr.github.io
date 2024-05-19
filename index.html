@@ -99,13 +99,13 @@
 <body>
 <button class="button1" onclick="myFunction()">Tumšais režīms</button>
 <div class="main-container">
-    <div class="image-container" onclick="showPopup('5.jpg')">
+    <div class="image-container" onclick="showPopup('5.jpg', 'Text for Pamatskola')">
         <img src="ridze.png" alt="Pamatskola">
     </div>
-    <div class="image-container" onclick="showPopup('agenskalns.jpg')">
+    <div class="image-container" onclick="showPopup('agenskalns.jpg', 'Text for Vidusskola')">
         <img src="agenskalns.jpg" alt="Vidusskola">
     </div>
-    <div class="image-container" onclick="showPopup('lu.jpg')">
+    <div class="image-container" onclick="showPopup('lu.jpg', 'Text for Augstskola')">
         <img src="lu.jpg" alt="Augstskola">
     </div>
 </div>
@@ -114,26 +114,8 @@
 
 <div class="popup">
     <img id="popup-img" src="" alt="Popup Image">
-    <span>tekststekststekststekststekststekststekststekststek
-	ststekststekststekststekststekststekststekststek
-	ststekststekststekststekststekststekststekststekststekstste
-	kststekststekststekststekststekststekststekststekststekststekststekststekststek
-	ststekststekststekststekststekststekststekststekststekststekststekststekststekststekstst
-	ekststekststekststekststekststekststekststekststekststekststekststekststekststekststekststek
-	ststekststekststekststekststekststekststekststekststekststekststekststekststekststekststekst
-	tekststekststekststekststekststekststekststekststekststekststekststekststekststekststekstst
-	ekststekststekststekststekststekststekststekststekststekststekststekststekststekststekstst
-	ekststekststekststekststekststekststekststekststekststekststekststekststekststekststekst
-	stekststekststekststekststekststekststekststekststekststekststekststekststekststekststek
-	ststekststekststekststekststekststekststekststekststekststekststekststekststekststeksts
-	tekststekststekststekststekststekststekststekststekststekststekststekststekststekststek
-	ststekststekststekststekststekststekststekststekststekststekststekststekststekststeksts
-	tekststekststekststekststekststekststekststekststekststekststekststekststekststekststek
-	ststekststekststekststekststekststekststekststekststekststekststekststekststekststeksts
-	tekststekststekststekststekststekststekststekststekststekststekststekststekststekststeks
-	tstekststekststekststekststekststekststekststekststekststekststekststekststekststekstste
-	kststekststekststekststekststekststekststekststekststekststekststekststekststekststekstst
-	</div>
+    <span id="popup-text"></span>
+</div>
 
 <script>
 function myFunction() {
@@ -141,8 +123,9 @@ function myFunction() {
    element.classList.toggle("dark-mode");
 }
 
-function showPopup(imageSrc) {
+function showPopup(imageSrc, text) {
     document.getElementById('popup-img').src = imageSrc;
+    document.getElementById('popup-text').textContent = text;
     document.querySelector('.popup').style.display = 'block';
     document.querySelector('.overlay').style.display = 'block';
 }
