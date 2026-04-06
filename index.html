@@ -59,15 +59,46 @@
         </form>
     </div>
 
-    <div id="detailModal" class="modal" onclick="this.style.display='none'">
-        <div class="modal-content" onclick="event.stopPropagation()">
+<div id="detailModal" class="modal" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <div id="view-mode">
             <img id="modal-image" src="">
             <h2 id="modal-name"></h2>
-            <p id="modal-score" style="font-size: 20px; font-weight: bold;"></p>
-            <p id="modal-comment" style="font-style: italic; background:#222; padding:15px; border-radius:8px;"></p>
-            <button id="delete-btn" style="background:#ff4444; color:white;">Delete Entry</button>
+            <p id="modal-score" style="font-weight:bold;"></p>
+            <p id="modal-comment" style="font-style:italic; background:#222; padding:10px; border-radius:5px;"></p>
+            
+            <hr style="border:0; border-top:1px solid #333; margin:20px 0;">
+            
+            <div style="text-align:left;">
+                <h4 style="margin-bottom:10px;">Discussion</h4>
+                <div id="comment-list" style="max-height: 150px; overflow-y: auto; background: #111; padding: 10px; border-radius: 5px; font-size: 13px; margin-bottom: 10px;">
+                    </div>
+                <div style="display:flex; gap:5px;">
+                    <input type="text" id="new-comment" placeholder="Add a comment..." style="margin-top:0; flex-grow:1;">
+                    <button onclick="postComment()" style="margin-top:0; width:auto; padding:5px 15px;">Post</button>
+                </div>
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button onclick="toggleEdit(true)" style="background:#ffbf7f; color:black;">Edit Entry</button>
+                <button id="delete-btn" style="background:#ff4444; color:white;">Delete</button>
+            </div>
+        </div>
+
+        <div id="edit-mode" style="display:none;">
+            <h3>Edit Meal</h3>
+            <input type="text" id="edit-name">
+            <div style="display:flex; gap:5px;">
+                <input type="number" id="edit-t" placeholder="T" min="1" max="10">
+                <input type="number" id="edit-tx" placeholder="Tx" min="1" max="10">
+                <input type="number" id="edit-e" placeholder="E" min="1" max="10">
+            </div>
+            <textarea id="edit-comm"></textarea>
+            <button onclick="saveEdit()" style="background:#7fff7f; color:black;">Save Changes</button>
+            <button onclick="toggleEdit(false)" style="background:none; border:none; text-decoration:underline;">Cancel</button>
         </div>
     </div>
+</div>
 
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.15.0/firebase-database-compat.js"></script>
@@ -167,6 +198,102 @@
             };
             container.appendChild(img);
         }
+        let currentMealId = null;
+
+function closeModal() {
+    document.getElementById('detailModal').style.display = 'none';
+    toggleEdit(false); // Always reset to view mode when closing
+}
+
+function toggleEdit(isEditing) {
+    document.getElementById('view-mode').style.display = isEditing ? 'none' : 'block';
+    document.getElementById('edit-mode').style.display = isEditing ? 'block' : 'none';
+}
+
+// UPDATE RENDERMEAL: Ensure it passes the whole meal object
+function renderMeal(meal, id) {
+    const avg = (meal.taste * 2 + meal.texture + meal.ease) / 4;
+    const tier = avg >= 9 ? 'S' : avg >= 7.5 ? 'A' : avg >= 6 ? 'B' : avg >= 4.5 ? 'C' : avg >= 3 ? 'D' : 'F';
+    
+    const container = document.getElementById(tier).querySelector('.content');
+    const img = document.createElement('img');
+    img.src = meal.url;
+    img.className = 'meal-img';
+    img.onclick = () => openMealDetails(meal, id, tier, avg);
+    container.appendChild(img);
+}
+
+function openMealDetails(meal, id, tier, avg) {
+    currentMealId = id;
+    
+    // Fill View Mode
+    document.getElementById('modal-image').src = meal.url;
+    document.getElementById('modal-name').innerText = meal.name;
+    document.getElementById('modal-score').innerText = `${tier} Tier (${avg.toFixed(1)}/10)`;
+    document.getElementById('modal-comment').innerText = meal.comment || "No review yet.";
+    
+    // Fill Edit Mode inputs
+    document.getElementById('edit-name').value = meal.name;
+    document.getElementById('edit-t').value = meal.taste;
+    document.getElementById('edit-tx').value = meal.texture;
+    document.getElementById('edit-e').value = meal.ease;
+    document.getElementById('edit-comm').value = meal.comment || "";
+
+    // Load Comments
+    loadComments(id);
+
+    document.getElementById('detailModal').style.display = 'flex';
+}
+
+// SAVE EDITS
+async function saveEdit() {
+    const updatedMeal = {
+        name: document.getElementById('edit-name').value,
+        taste: parseFloat(document.getElementById('edit-t').value),
+        texture: parseFloat(document.getElementById('edit-tx').value),
+        ease: parseFloat(document.getElementById('edit-e').value),
+        comment: document.getElementById('edit-comm').value
+    };
+    
+    // We use .update() so we don't overwrite the image 'url' or 'comments'
+    await db.child(currentMealId).update(updatedMeal);
+    toggleEdit(false);
+}
+
+// COMMENT LOGIC
+function postComment() {
+    const text = document.getElementById('new-comment').value;
+    if(!text) return;
+
+    const commentData = {
+        text: text,
+        timestamp: Date.now()
+    };
+
+    db.child(currentMealId).child('comments').push(commentData);
+    document.getElementById('new-comment').value = "";
+}
+
+function loadComments(mealId) {
+    const list = document.getElementById('comment-list');
+    list.innerHTML = "Loading discussion...";
+
+    db.child(mealId).child('comments').on('value', (snap) => {
+        list.innerHTML = "";
+        const comments = snap.val();
+        if(!comments) {
+            list.innerHTML = "<span style='color:#555'>No comments yet. Be the first!</span>";
+            return;
+        }
+        Object.values(comments).forEach(c => {
+            const div = document.createElement('div');
+            div.style.marginBottom = "8px";
+            div.innerHTML = `<b style="color:#ff7f7f;">Anon:</b> ${c.text}`;
+            list.appendChild(div);
+        });
+        list.scrollTop = list.scrollHeight; // Scroll to bottom
+    });
+}
     </script>
 </body>
 </html>
