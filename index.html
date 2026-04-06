@@ -3,123 +3,114 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Meal Tier List Maker</title>
+    <title>Dynamic Meal Tier Maker</title>
     <style>
-        /* TierMaker Palette & Typography */
         body {
             background-color: #1a1a1a;
             color: white;
-            font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+            font-family: Arial, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
             padding: 20px;
         }
 
-        h1 {
-            text-transform: uppercase;
-            letter-spacing: 2px;
+        /* TierMaker Container */
+        #tier-container {
+            width: 100%;
+            max-width: 900px;
+            background-color: #000;
+            border: 1px solid #333;
             margin-bottom: 30px;
         }
 
-        /* The Container */
-        #tier-container {
-            width: 100%;
-            max-width: 1000px;
-            background-color: #000;
-            border: 1px solid #333;
-        }
-
-        /* Individual Rows */
         .tier-row {
             display: flex;
-            min-height: 80px;
-            border-bottom: 1px solid #111;
-            transition: all 0.2s;
+            min-height: 100px; /* Base height */
+            border-bottom: 1px solid #222;
         }
 
-        /* The Label (S, A, B, etc.) */
         .label {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 80px;
-            min-width: 80px;
+            width: 100px;
+            min-width: 100px;
             font-weight: bold;
-            font-size: 24px;
-            color: #000;
-            text-align: center;
-            border-right: 1px solid #111;
+            font-size: 30px;
+            color: #111;
         }
 
-        /* Tier Colors */
-        .s-label { background-color: #ff7f7f; }
-        .a-label { background-color: #ffbf7f; }
-        .b-label { background-color: #ffff7f; }
-        .c-label { background-color: #7fff7f; }
-        .d-label { background-color: #7fbfff; }
-        .f-label { background-color: #ff7fff; }
+        /* Colors */
+        .s { background: #ff7f7f; } .a { background: #ffbf7f; }
+        .b { background: #ffff7f; } .c { background: #7fff7f; }
+        .d { background: #7fbfff; } .f { background: #ff7fff; }
 
-        /* The Slot where images go */
+        /* This allows the row to grow vertically as images fill it */
         .content {
             display: flex;
             flex-wrap: wrap;
-            padding: 5px;
+            align-content: flex-start;
+            padding: 10px;
             flex-grow: 1;
-            min-height: 80px;
+            gap: 10px;
         }
 
-        /* Meal Image Styling */
-        .meal-card {
-            width: 70px;
-            height: 70px;
-            margin: 5px;
-            cursor: pointer;
+        .meal-img {
+            width: 80px;
+            height: 80px;
             object-fit: cover;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: 0.2s;
+        }
+
+        .meal-img:hover { border-color: white; transform: scale(1.05); }
+
+        /* Form Styling */
+        #entry-form {
+            background: #222;
+            padding: 20px;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input, textarea, button {
+            padding: 10px;
+            background: #333;
             border: 1px solid #444;
-            transition: transform 0.1s;
+            color: white;
+            border-radius: 4px;
         }
 
-        .meal-card:hover {
-            transform: scale(1.1);
-            border-color: #fff;
-        }
+        button { background: #ff7f7f; color: black; font-weight: bold; cursor: pointer; border: none; }
+        button:hover { background: #ff9f9f; }
 
-        /* Modal / Popup Styling */
+        /* Modal Styling */
         .modal {
             display: none;
             position: fixed;
-            z-index: 100;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.9);
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
         }
 
         .modal-content {
-            background-color: #222;
-            margin: 10% auto;
-            padding: 20px;
-            border: 1px solid #444;
-            width: 80%;
-            max-width: 500px;
+            background: #222;
+            padding: 30px;
+            border-radius: 12px;
             text-align: center;
-            border-radius: 8px;
+            max-width: 400px;
+            border: 1px solid #ff7f7f;
         }
 
-        #modalImg {
-            width: 100%;
-            max-height: 300px;
-            object-fit: contain;
-            margin-bottom: 15px;
-        }
-
-        .close-btn {
-            float: right;
-            font-size: 28px;
-            cursor: pointer;
-        }
+        #modal-image { width: 100%; border-radius: 8px; margin-bottom: 15px; }
     </style>
 </head>
 <body>
@@ -127,69 +118,94 @@
     <h1>Meal Tier List</h1>
 
     <div id="tier-container">
-        <div class="tier-row" id="S-tier"><div class="label s-label">S</div><div class="content"></div></div>
-        <div class="tier-row" id="A-tier"><div class="label a-label">A</div><div class="content"></div></div>
-        <div class="tier-row" id="B-tier"><div class="label b-label">B</div><div class="content"></div></div>
-        <div class="tier-row" id="C-tier"><div class="label c-label">C</div><div class="content"></div></div>
-        <div class="tier-row" id="D-tier"><div class="label d-label">D</div><div class="content"></div></div>
-        <div class="tier-row" id="F-tier"><div class="label f-label">F</div><div class="content"></div></div>
+        <div class="tier-row" id="S"><div class="label s">S</div><div class="content"></div></div>
+        <div class="tier-row" id="A"><div class="label a">A</div><div class="content"></div></div>
+        <div class="tier-row" id="B"><div class="label b">B</div><div class="content"></div></div>
+        <div class="tier-row" id="C"><div class="label c">C</div><div class="content"></div></div>
+        <div class="tier-row" id="D"><div class="label d">D</div><div class="content"></div></div>
+        <div class="tier-row" id="F"><div class="label f">F</div><div class="content"></div></div>
     </div>
 
-    <div id="infoModal" class="modal">
-        <div class="modal-content">
-            <span class="close-btn" onclick="closeModal()">&times;</span>
-            <h2 id="modalTitle"></h2>
-            <img id="modalImg" src="">
-            <p id="modalScore" style="font-size: 1.2em; color: #ffbf7f;"></p>
-            <p id="modalComment" style="font-style: italic; color: #ccc;"></p>
+    <h3>Add New Meal</h3>
+    <form id="entry-form">
+        <input type="text" id="food-name" placeholder="Food Name" required>
+        <input type="url" id="food-url" placeholder="Image URL (Right click image -> Copy Image Address)" required>
+        <div style="display:flex; gap: 5px;">
+            <input type="number" id="t-score" placeholder="Taste (1-10)" min="1" max="10" required>
+            <input type="number" id="tx-score" placeholder="Texture (1-10)" min="1" max="10" required>
+            <input type="number" id="e-score" placeholder="Ease (1-10)" min="1" max="10" required>
+        </div>
+        <textarea id="food-comment" placeholder="Your thoughts..."></textarea>
+        <button type="submit">Add to List</button>
+    </form>
+
+    <div id="detailModal" class="modal" onclick="closeModal()">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <img id="modal-image" src="" alt="">
+            <h2 id="modal-name"></h2>
+            <p id="modal-rank" style="font-weight:bold; font-size: 20px;"></p>
+            <p id="modal-score"></p>
+            <p id="modal-comment" style="font-style: italic; color: #aaa;"></p>
+            <button onclick="closeModal()" style="margin-top:10px;">Close</button>
         </div>
     </div>
 
     <script>
-        // DATA: Your friends can easily edit this section
-        const mealData = [
-            { name: "Spicy Ramen", taste: 10, texture: 8, ease: 7, img: "https://via.placeholder.com/150/ff7f7f", comment: "Perfect for rainy days." },
-            { name: "Frozen Pizza", taste: 5, texture: 4, ease: 10, img: "https://via.placeholder.com/150/7fbfff", comment: "Low effort, low reward." },
-            { name: "Steak", taste: 9, texture: 10, ease: 4, img: "https://via.placeholder.com/150/ffbf7f", comment: "A masterpiece if done right." }
-        ];
+        const form = document.getElementById('entry-form');
 
-        function calculateTier(meal) {
-            const score = (meal.taste * 2 + meal.texture + meal.ease) / 4;
-            if (score >= 9) return "S-tier";
-            if (score >= 7.5) return "A-tier";
-            if (score >= 6) return "B-tier";
-            if (score >= 4.5) return "C-tier";
-            if (score >= 3) return "D-tier";
-            return "F-tier";
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+
+            const meal = {
+                name: document.getElementById('food-name').value,
+                url: document.getElementById('food-url').value,
+                taste: parseFloat(document.getElementById('t-score').value),
+                texture: parseFloat(document.getElementById('tx-score').value),
+                ease: parseFloat(document.getElementById('e-score').value),
+                comment: document.getElementById('food-comment').value
+            };
+
+            addMealToTier(meal);
+            form.reset();
+        });
+
+        function addMealToTier(meal) {
+            const finalScore = (meal.taste * 2 + meal.texture + meal.ease) / 4;
+            let tier = 'F';
+            if (finalScore >= 9) tier = 'S';
+            else if (finalScore >= 7.5) tier = 'A';
+            else if (finalScore >= 6) tier = 'B';
+            else if (finalScore >= 4.5) tier = 'C';
+            else if (finalScore >= 3) tier = 'D';
+
+            const container = document.getElementById(tier).querySelector('.content');
+            
+            const img = document.createElement('img');
+            img.src = meal.url;
+            img.className = 'meal-img';
+            img.onclick = () => openModal(meal, tier, finalScore);
+            
+            container.appendChild(img);
         }
 
-        function renderList() {
-            mealData.forEach(meal => {
-                const tierId = calculateTier(meal);
-                const row = document.getElementById(tierId).querySelector('.content');
-                
-                const img = document.createElement('img');
-                img.src = meal.img;
-                img.className = "meal-card";
-                img.title = meal.name; // Shows name on hover
-                img.onclick = () => showModal(meal);
-                
-                row.appendChild(img);
-            });
-        }
-
-        function showModal(meal) {
-            const score = (meal.taste * 2 + meal.texture + meal.ease) / 4;
-            document.getElementById('modalTitle').innerText = meal.name;
-            document.getElementById('modalImg').src = meal.img;
-            document.getElementById('modalScore').innerText = `Final Score: ${score.toFixed(1)}/10`;
-            document.getElementById('modalComment').innerText = `"${meal.comment}"`;
-            document.getElementById('infoModal').style.display = "block";
+        function openModal(meal, tier, score) {
+            document.getElementById('modal-image').src = meal.url;
+            document.getElementById('modal-name').innerText = meal.name;
+            document.getElementById('modal-rank').innerText = `Rank: ${tier}`;
+            document.getElementById('modal-rank').style.color = getTierColor(tier);
+            document.getElementById('modal-score').innerText = `Score: ${score.toFixed(1)} / 10`;
+            document.getElementById('modal-comment').innerText = `"${meal.comment}"`;
+            document.getElementById('detailModal').style.display = 'flex';
         }
 
         function closeModal() {
-            document.getElementById('infoModal').style.display = "none";
+            document.getElementById('detailModal').style.display = 'none';
         }
 
-        // Close modal if clicking outside of it
-        window.onclick = (event) => {
+        function getTierColor(tier) {
+            const colors = { S: '#ff7f7f', A: '#ffbf7f', B: '#ffff7f', C: '#7fff7f', D: '#7fbfff', F: '#ff7fff' };
+            return colors[tier];
+        }
+    </script>
+</body>
+</html>
