@@ -12,7 +12,15 @@
         .label { width: 100px; min-width: 100px; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 32px; color: #111; }
         .s { background: #ff7f7f; } .a { background: #ffbf7f; } .b { background: #ffff7f; }
         .c { background: #7fff7f; } .d { background: #7fbfff; } .f { background: #ff7fff; }
-        .content { display: flex; flex-wrap: wrap; padding: 10px; gap: 10px; flex-grow: 1; }
+.content {
+    display: flex;
+    flex-wrap: wrap;
+    padding: 10px;
+    gap: 15px; /* Increased gap for a cleaner look */
+    flex-grow: 1;
+    align-items: center; /* Keeps images centered vertically in the row */
+    justify-content: flex-start; /* Keeps them glued to the left/letter */
+}
         .meal-img { width: 80px; height: 80px; object-fit: cover; cursor: pointer; border: 2px solid transparent; transition: 0.1s; }
         .meal-img:hover { border-color: white; transform: scale(1.1); }
         
@@ -172,13 +180,46 @@
         const db = firebase.database().ref('meals');
 
         // 2. LISTEN FOR DATA
-        db.on('value', (snapshot) => {
-            document.querySelectorAll('.content').forEach(c => c.innerHTML = '');
-            const data = snapshot.val();
-            if (data) {
-                Object.keys(data).forEach(id => renderMeal(data[id], id));
-            }
-        });
+// === UPDATED LISTENER WITH SORTING ===
+db.on('value', (snapshot) => {
+    // 1. Clear the tiers
+    document.querySelectorAll('.content').forEach(c => c.innerHTML = '');
+    
+    const data = snapshot.val();
+    if (!data) return;
+
+    // 2. Convert the Object into an Array so we can sort it
+    const mealArray = Object.keys(data).map(id => {
+        const meal = data[id];
+        // Calculate the same score used for tiering
+        const score = (meal.taste * 2 + meal.texture + meal.ease) / 4;
+        return { ...meal, id, score };
+    });
+
+    // 3. Sort the array: Highest Score first (Left side)
+    mealArray.sort((a, b) => b.score - a.score);
+
+    // 4. Render them in the new order
+    mealArray.forEach(meal => {
+        renderSortedMeal(meal, meal.id, meal.score);
+    });
+});
+
+// Helper to render the meal into the correct tier
+function renderSortedMeal(meal, id, score) {
+    const tier = score >= 9 ? 'S' : score >= 7.5 ? 'A' : score >= 6 ? 'B' : score >= 4.5 ? 'C' : score >= 3 ? 'D' : 'F';
+    
+    const container = document.getElementById(tier).querySelector('.content');
+    const img = document.createElement('img');
+    img.src = meal.url;
+    img.className = 'meal-img';
+    
+    // Add a tooltip so you can see the score on hover
+    img.title = `${meal.name}: ${score.toFixed(1)}`;
+    
+    img.onclick = () => openMealDetails(meal, id, tier, score);
+    container.appendChild(img);
+}
 
         // 3. THE UPLOAD LOGIC
         document.getElementById('meal-form').addEventListener('submit', async (e) => {
